@@ -143,6 +143,12 @@ build: clean
 		-ldflags "-s -w -X ${PKG}/version.RELEASE=${TAG} -X ${PKG}/version.COMMIT=${COMMIT} -X ${PKG}/version.REPO=${REPO_INFO}" \
 		-o ${TEMP_DIR}/rootfs/nginx-ingress-controller ${PKG}/cmd/nginx
 
+build-cp: clean
+	mkdir ${TEMP_DIR}/rootfs
+	$(DOCKER) run --rm quay.io/kubernetes-ingress-controller/nginx-ingress-controller:0.10.2 -- cat /nginx-ingress-controller > \
+		${TEMP_DIR}/rootfs/nginx-ingress-controller 
+	chmod a+x ${TEMP_DIR}/rootfs/nginx-ingress-controller
+
 .PHONY: verify-all
 verify-all:
 	@./hack/verify-all.sh

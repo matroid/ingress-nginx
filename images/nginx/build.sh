@@ -33,6 +33,7 @@ export ZIPKIN_CPP_VERSION=0.2.0
 export JAEGER_VERSION=0.1.0
 export MODSECURITY_VERSION=1.0.0
 export LUA_VERSION=0.10.12rc2
+export RTMP_VERSION=1.2.1
 
 export BUILD_PATH=/tmp/build
 
@@ -147,6 +148,9 @@ get_src 18edf2d18fa331265c36516a4a19ba75d26f46eafcc5e0c2d9aa6c237e8bc110 \
 get_src 678ec4b6c2b6bba7e8000f42feb71d2bf044a44cf3909b3cbbccb708827ca7a6 \
         "https://github.com/jaegertracing/cpp-client/archive/v$JAEGER_VERSION.tar.gz"
 
+get_src 87aa597400b0b5a05274ee2d23d8cb8224e12686227a0abe31d783b3a645ea37 \
+        "https://github.com/arut/nginx-rtmp-module/archive/v$RTMP_VERSION.tar.gz"
+
 #https://blog.cloudflare.com/optimizing-tls-over-tcp-to-reduce-latency/
 curl -sSL -o nginx__dynamic_tls_records.patch https://raw.githubusercontent.com/cloudflare/sslconfig/master/patches/nginx__1.11.5_dynamic_tls_records.patch
 
@@ -182,7 +186,7 @@ make install
 # Get Brotli source and deps
 cd "$BUILD_PATH"
 git clone --depth=1 https://github.com/eustas/ngx_brotli.git
-cd ngx_brotli 
+cd ngx_brotli
 git submodule init
 git submodule update
 
@@ -225,9 +229,9 @@ if [[ ${ARCH} != "armv7l" || ${ARCH} != "aarch64" ]]; then
   WITH_FLAGS+=" --with-file-aio"
 fi
 
-CC_OPT="-g -O3 -flto -fPIE -fstack-protector-strong -Wformat -Werror=format-security -Wdate-time -D_FORTIFY_SOURCE=2 -Wno-deprecated-declarations --param=ssp-buffer-size=4 -DTCP_FASTOPEN=23 -Wno-error=strict-aliasing -fPIC -I$HUNTER_INSTALL_DIR/include"
+CC_OPT="-g -O3 -flto -fPIE -fstack-protector-strong -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -Wno-deprecated-declarations --param=ssp-buffer-size=4 -DTCP_FASTOPEN=23 -Wno-error=strict-aliasing -fPIC -I$HUNTER_INSTALL_DIR/include"
 LD_OPT="-ljemalloc -Wl,-Bsymbolic-functions -fPIE -fPIC -pie -Wl,-z,relro -Wl,-z,now -L$HUNTER_INSTALL_DIR/lib"
-   
+
 if [[ ${ARCH} == "x86_64" ]]; then
   CC_OPT+=' -m64 -mtune=generic'
 fi
@@ -240,6 +244,7 @@ WITH_MODULES="--add-module=$BUILD_PATH/ngx_devel_kit-$NDK_VERSION \
   --add-module=$BUILD_PATH/nginx-http-auth-digest-$NGINX_DIGEST_AUTH \
   --add-module=$BUILD_PATH/ngx_http_substitutions_filter_module-$NGINX_SUBSTITUTIONS \
   --add-module=$BUILD_PATH/lua-nginx-module-$LUA_VERSION \
+  --add-module=$BUILD_PATH/nginx-rtmp-module-$RTMP_VERSION \
   --add-dynamic-module=$BUILD_PATH/nginx-opentracing-$NGINX_OPENTRACING_VERSION/opentracing \
   --add-dynamic-module=$BUILD_PATH/nginx-opentracing-$NGINX_OPENTRACING_VERSION/jaeger \
   --add-dynamic-module=$BUILD_PATH/nginx-opentracing-$NGINX_OPENTRACING_VERSION/zipkin \
