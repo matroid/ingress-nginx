@@ -57,6 +57,10 @@ fi
 
 apt-get update && apt-get dist-upgrade -y
 
+# [Nov 2019] Tak:
+# Install Stunnel for RTMP-S
+apt-get install -y --no-install-recommends stunnel
+
 # install required packages to build
 clean-install \
   bash \
@@ -96,8 +100,10 @@ if [[ ${ARCH} == "s390x" ]]; then
 fi
 
 # download GeoIP databases
-wget -O /etc/nginx/GeoIP.dat.gz https://geolite.maxmind.com/download/geoip/database/GeoLiteCountry/GeoIP.dat.gz || { echo 'Could not download GeoLiteCountry, exiting.' ; exit 1; }
-wget -O /etc/nginx/GeoLiteCity.dat.gz https://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz || { echo 'Could not download GeoLiteCity, exiting.' ; exit 1; }
+# wget -O /etc/nginx/GeoIP.dat.gz https://geolite.maxmind.com/download/geoip/database/GeoLiteCountry/GeoIP.dat.gz || { echo 'Could not download GeoLiteCountry, exiting.' ; exit 1; }
+# wget -O /etc/nginx/GeoLiteCity.dat.gz https://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz || { echo 'Could not download GeoLiteCity, exiting.' ; exit 1; }
+wget -O /etc/nginx/GeoIP.dat.gz https://geolite.maxmind.com/download/geoip/database/GeoLite2-Country.tar.gz || { echo 'Could not download GeoLiteCountry, exiting.' ; exit 1; }
+wget -O /etc/nginx/GeoLiteCity.dat.gz https://geolite.maxmind.com/download/geoip/database/GeoLite2-City.tar.gz || { echo 'Could not download GeoLiteCity, exiting.' ; exit 1; }
 
 gunzip /etc/nginx/GeoIP.dat.gz
 gunzip /etc/nginx/GeoLiteCity.dat.gz
@@ -139,13 +145,17 @@ get_src c77041cb2f147ac81b2b0702abfced5565a9cebc318d045c060a4c3e074009ee \
 get_src 611eb6a1ff1c326c472421ae2486ba34a94ddc78d90047df3f097bcdad3298e3 \
         "https://github.com/rnburn/zipkin-cpp-opentracing/archive/v$ZIPKIN_CPP_VERSION.tar.gz"
 
-get_src 8deee6d6f7128f58bd6ba2893bd69c1fdbc8a3ad2797ba45ef94b977255d181c \
+# [Nov 2019] Tak:
+# get_src 8deee6d6f7128f58bd6ba2893bd69c1fdbc8a3ad2797ba45ef94b977255d181c \
+get_src dab677f9a7a5eb1d7ecbd9e7c5af75613582b25fb0c587aa80130256989b7a6e \
         "https://github.com/SpiderLabs/ModSecurity-nginx/archive/v$MODSECURITY_VERSION.tar.gz"
 
 get_src 18edf2d18fa331265c36516a4a19ba75d26f46eafcc5e0c2d9aa6c237e8bc110 \
         "https://github.com/openresty/lua-nginx-module/archive/v$LUA_VERSION.tar.gz"
 
-get_src 678ec4b6c2b6bba7e8000f42feb71d2bf044a44cf3909b3cbbccb708827ca7a6 \
+# [Nov 2019] Tak:
+# get_src 678ec4b6c2b6bba7e8000f42feb71d2bf044a44cf3909b3cbbccb708827ca7a6 \
+get_src a3ba464326ae1fb87437c1a2d07d22970b99d627168b6bb965d8f9c1c7fddb12 \
         "https://github.com/jaegertracing/cpp-client/archive/v$JAEGER_VERSION.tar.gz"
 
 get_src 87aa597400b0b5a05274ee2d23d8cb8224e12686227a0abe31d783b3a645ea37 \
@@ -165,7 +175,9 @@ make
 make install
 
 # build zipkin lib
-cd "$BUILD_PATH/cpp-client-$JAEGER_VERSION"
+# [Nov 2019] Tak:
+# cd "$BUILD_PATH/cpp-client-$JAEGER_VERSION"
+cd "$BUILD_PATH/jaeger-client-cpp-$JAEGER_VERSION"
 sed -i 's/-Werror//' CMakeLists.txt
 mkdir .build
 cd .build
@@ -376,3 +388,4 @@ Include /etc/nginx/owasp-modsecurity-crs/rules/RESPONSE-959-BLOCKING-EVALUATION.
 Include /etc/nginx/owasp-modsecurity-crs/rules/RESPONSE-980-CORRELATION.conf
 Include /etc/nginx/owasp-modsecurity-crs/rules/RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf
 " > /etc/nginx/owasp-modsecurity-crs/nginx-modsecurity.conf
+
