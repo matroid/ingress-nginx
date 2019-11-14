@@ -99,14 +99,15 @@ if [[ ${ARCH} == "s390x" ]]; then
   git config --global pack.threads "1"
 fi
 
-# download GeoIP databases
+# [DEPRECATED] download GeoIP databases
+# [Nov 2019] Tak: the links no longer work and GeoIP2 requires separate nginx package
 # wget -O /etc/nginx/GeoIP.dat.gz https://geolite.maxmind.com/download/geoip/database/GeoLiteCountry/GeoIP.dat.gz || { echo 'Could not download GeoLiteCountry, exiting.' ; exit 1; }
 # wget -O /etc/nginx/GeoLiteCity.dat.gz https://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz || { echo 'Could not download GeoLiteCity, exiting.' ; exit 1; }
-wget -O /etc/nginx/GeoIP.dat.gz https://geolite.maxmind.com/download/geoip/database/GeoLite2-Country.tar.gz || { echo 'Could not download GeoLiteCountry, exiting.' ; exit 1; }
-wget -O /etc/nginx/GeoLiteCity.dat.gz https://geolite.maxmind.com/download/geoip/database/GeoLite2-City.tar.gz || { echo 'Could not download GeoLiteCity, exiting.' ; exit 1; }
 
-gunzip /etc/nginx/GeoIP.dat.gz
-gunzip /etc/nginx/GeoLiteCity.dat.gz
+# gunzip /etc/nginx/GeoIP.dat.gz
+# gunzip /etc/nginx/GeoLiteCity.dat.gz
+mv /GeoIP.dat /etc/nginx/GeoIP.dat
+mv /GeoLiteCity.dat /etc/nginx/GeoLiteCity.dat
 
 mkdir --verbose -p "$BUILD_PATH"
 cd "$BUILD_PATH"

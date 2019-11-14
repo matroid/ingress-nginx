@@ -19,6 +19,9 @@ CROSS_BUILD_COPY qemu-ARCH-static /usr/bin/
 
 COPY build.sh /
 
+COPY GeoIP.dat /
+COPY GeoLiteCity.dat /
+
 RUN clean-install bash
 
 RUN /build.sh
