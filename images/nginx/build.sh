@@ -19,7 +19,7 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-export NGINX_VERSION=1.13.8
+export NGINX_VERSION=1.20.1
 export NDK_VERSION=0.3.0
 export VTS_VERSION=0.1.15
 export SETMISC_VERSION=0.31
@@ -31,7 +31,7 @@ export NGINX_OPENTRACING_VERSION=0.2.1
 export OPENTRACING_CPP_VERSION=1.2.0
 export ZIPKIN_CPP_VERSION=0.2.0
 export JAEGER_VERSION=0.1.0
-export MODSECURITY_VERSION=1.0.0
+export MODSECURITY_VERSION=1.0.1
 export LUA_VERSION=0.10.12rc2
 export RTMP_VERSION=1.2.1
 
@@ -59,7 +59,7 @@ apt-get update && apt-get dist-upgrade -y
 
 # [Nov 2019] Tak:
 # Install Stunnel for RTMP-S
-apt-get install -y --no-install-recommends stunnel
+apt-get install -y --no-install-recommends stunnel libyaml-cpp-dev=0.5.2-4 # needed by JaegerTracking
 
 # install required packages to build
 clean-install \
@@ -113,7 +113,8 @@ mkdir --verbose -p "$BUILD_PATH"
 cd "$BUILD_PATH"
 
 # download, verify and extract the source files
-get_src 8410b6c31ff59a763abf7e5a5316e7629f5a5033c95a3a0ebde727f9ec8464c5 \
+# [Jun 2021] updated from 1.13.8 to 1.20.1 by Tak
+get_src e462e11533d5c30baa05df7652160ff5979591d291736cfa5edb9fd2edb48c49 \
         "http://nginx.org/download/nginx-$NGINX_VERSION.tar.gz"
 
 get_src 88e05a99a8a7419066f5ae75966fb1efc409bad4522d14986da074554ae61619 \
@@ -146,16 +147,14 @@ get_src c77041cb2f147ac81b2b0702abfced5565a9cebc318d045c060a4c3e074009ee \
 get_src 611eb6a1ff1c326c472421ae2486ba34a94ddc78d90047df3f097bcdad3298e3 \
         "https://github.com/rnburn/zipkin-cpp-opentracing/archive/v$ZIPKIN_CPP_VERSION.tar.gz"
 
-# [Nov 2019] Tak:
-# get_src 8deee6d6f7128f58bd6ba2893bd69c1fdbc8a3ad2797ba45ef94b977255d181c \
-get_src dab677f9a7a5eb1d7ecbd9e7c5af75613582b25fb0c587aa80130256989b7a6e \
+# [Jun 2021] Tak:
+get_src c969a78659bb47c84929de0b9adc1f8c512a51ec9dd3b162cb568ae228d3d59e \
         "https://github.com/SpiderLabs/ModSecurity-nginx/archive/v$MODSECURITY_VERSION.tar.gz"
 
 get_src 18edf2d18fa331265c36516a4a19ba75d26f46eafcc5e0c2d9aa6c237e8bc110 \
         "https://github.com/openresty/lua-nginx-module/archive/v$LUA_VERSION.tar.gz"
 
 # [Nov 2019] Tak:
-# get_src 678ec4b6c2b6bba7e8000f42feb71d2bf044a44cf3909b3cbbccb708827ca7a6 \
 get_src a3ba464326ae1fb87437c1a2d07d22970b99d627168b6bb965d8f9c1c7fddb12 \
         "https://github.com/jaegertracing/cpp-client/archive/v$JAEGER_VERSION.tar.gz"
 
@@ -175,9 +174,12 @@ cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF ..
 make
 make install
 
-# build zipkin lib
-# [Nov 2019] Tak:
-# cd "$BUILD_PATH/cpp-client-$JAEGER_VERSION"
+# [Jun 2021] Tak: dirty hack to resolve Hunter download issue
+# https://stackoverflow.com/questions/67362965/boost-binary-forbidden-downloaded-via-hunter
+mkdir -p /root/.hunter/_Base/Download/Boost/1.65.1/4a5b0c3/ && \
+  cd /root/.hunter/_Base/Download/Boost/1.65.1/4a5b0c3/ && \
+  wget "https://boostorg.jfrog.io/artifactory/main/release/1.65.1/source/boost_1_65_1.tar.bz2"
+
 cd "$BUILD_PATH/jaeger-client-cpp-$JAEGER_VERSION"
 sed -i 's/-Werror//' CMakeLists.txt
 mkdir .build
@@ -217,8 +219,9 @@ make install
 # build nginx
 cd "$BUILD_PATH/nginx-$NGINX_VERSION"
 
-echo "Applying nginx patches..."
-patch -p1 < $BUILD_PATH/nginx__dynamic_tls_records.patch
+# [Jun 2021] I hope this is no longer needed
+# echo "Applying nginx patches..."
+# patch -p1 < $BUILD_PATH/nginx__dynamic_tls_records.patch
 
 WITH_FLAGS="--with-debug \
   --with-pcre-jit \
